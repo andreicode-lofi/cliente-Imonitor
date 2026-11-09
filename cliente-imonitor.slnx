@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="cliente-imonitor-web/cliente-imonitor-web.csproj" />
+  <Project Path="cliente-imonitor/cliente-imonitor.csproj" />
+</Solution>

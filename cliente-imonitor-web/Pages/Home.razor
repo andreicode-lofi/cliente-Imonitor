@@ -1,0 +1,226 @@
+﻿@page "/"
+
+@using cliente_imonitor_web.Model.Dtos
+@using cliente_imonitor_web.Services
+@inject ClienteService ClienteService
+
+
+<PageTitle>Gerenciamento de Clientes - i-Monitor</PageTitle>
+
+<div class="container my-4">
+
+    <!-- Banner do Topo -->
+    <div class="mb-4 overflow-hidden rounded shadow-sm">
+        <img src="image/banner.jpg" alt="Banner i-Monitor" class="img-fluid w-100" style="max-height: 280px; object-fit: cover; object-position: center;" />
+    </div>
+
+    <!-- Cabeçalho Principal -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-4 bg-light rounded d-md-flex align-items-center justify-content-between">
+            <div>
+                <h2 class="fw-bold text-dark mb-1">Gestão de Clientes</h2>
+                <p class="text-muted mb-0 small">Painel administrativo para controle e manutenção dos registros no sistema.</p>
+            </div>
+            <div class="mt-3 mt-md-0">
+                <button class="btn btn-primary px-4 py-2 fw-semibold shadow-sm" @onclick="AbrirModalNovo">
+                    + Novo Cliente
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seção da Tabela e Filtros -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+            
+            <!-- Barra de Busca -->
+            <div class="row mb-4">
+                <div class="col-md-6 col-lg-5">
+                    <label class="form-label text-muted small fw-bold">Filtrar registros</label>
+                    <div class="input-group">
+                        <input type="text"
+                               class="form-control"
+                               placeholder="Digite o nome para buscar..."
+                               @bind="termoBusca"
+                               @bind:event="oninput"
+                               @onkeyup="FiltrarClientes" />
+                    </div>
+                    <div class="form-text">A busca filtras os nomes cadastrados em tempo real.</div>
+                </div>
+            </div>
+
+            <!-- Tabela de Clientes -->
+            @if (clientes == null)
+            {
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary mb-2" role="status"></div>
+                    <p class="text-muted small">Carregando a base de clientes do MongoDB...</p>
+                </div>
+            }
+            else if (!clientes.Any())
+            {
+                <div class="alert alert-secondary text-center py-4 mb-0" role="alert">
+                    <h6 class="fw-bold mb-1">Nenhum registro localizado</h6>
+                    <p class="small text-muted mb-0">Não foram encontrados clientes com os critérios da busca atual.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="text-secondary text-uppercase fs-7">Nome / Titular</th>
+                                <th class="text-secondary text-uppercase fs-7">Contato Telefônico</th>
+                                <th class="text-secondary text-uppercase fs-7">E-mail</th>
+                                <th class="text-secondary text-uppercase fs-7">Endereço Residencial/Comercial</th>
+                                <th class="text-end text-secondary text-uppercase fs-7">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var cliente in clientes)
+                            {
+                                <tr>
+                                    <td class="fw-bold text-dark">@cliente.Nome</td>
+                                    <td class="text-muted fs-7">@cliente.Telefone</td>
+                                    <td class="text-muted fs-7">@cliente.Email</td>
+                                    <td class="text-muted fs-7">@cliente.Endereco</td>
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-outline-primary px-3 rounded-pill"
+                                                @onclick="() => AbrirModalEditar(cliente)">
+                                            Editar
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-muted fs-7 mt-3">
+                    Exibindo <strong>@clientes.Count</strong> cliente(s) cadastrado(s).
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Modal Profissional (Novo / Editar) -->
+@if (exibirModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.55); backdrop-filter: blur(2px);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-light">
+                    <div>
+                        <h5 class="modal-title fw-bold text-dark mb-0">
+                            @(string.IsNullOrEmpty(clienteEditando.Id) ? "Cadastrar Novo Cliente" : "Atualizar Cadastro de Cliente")
+                        </h5>
+                        <small class="text-muted">Preencha os dados abaixo com as informações do cliente.</small>
+                    </div>
+                    <button type="button" class="btn-close" @onclick="FecharModal"></button>
+                </div>
+                
+                <EditForm Model="clienteEditando" OnValidSubmit="SalvarCliente">
+                    <div class="modal-body p-4">
+                        
+                        <!-- Campo Nome -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-dark">Nome Completo <span class="text-danger">*</span></label>
+                            <InputText class="form-control" placeholder="Ex: João da Silva" @bind-Value="clienteEditando.Nome" required />
+                            <div class="form-text">Insira o nome do cliente.</div>
+                        </div>
+
+                        <!-- Campo Telefone -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-dark">Telefone de Contato <span class="text-danger">*</span></label>
+                            <InputText class="form-control" placeholder="Ex: (13) 99999-9999" @bind-Value="clienteEditando.Telefone" required />
+                            <div class="form-text">DDD + Número de celular ou fixo com WhatsApp habilitado.</div>
+                        </div>
+
+                        <!-- Campo E-mail -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-dark">E-mail Principal <span class="text-danger">*</span></label>
+                            <InputText class="form-control" type="email" placeholder="cliente@dominio.com" @bind-Value="clienteEditando.Email" required />
+                            <div class="form-text">Endereço eletrônico utilizado para envio de notificações e cobranças.</div>
+                        </div>
+
+                        <!-- Campo Endereço -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold text-dark">Endereço Completo <span class="text-danger">*</span></label>
+                            <InputText class="form-control" placeholder="Rua, Número, Bairro, Cidade - UF" @bind-Value="clienteEditando.Endereco" required />
+                            <div class="form-text">Logradouro completo com número e complemento se houver.</div>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer bg-light px-4 py-3">
+                        <button type="button" class="btn btn-outline-secondary px-4 rounded-2" @onclick="FecharModal">Cancelar</button>
+                        <button type="submit" class="btn btn-success px-4 rounded-2 fw-semibold">
+                            @(string.IsNullOrEmpty(clienteEditando.Id) ? "Confirmar Cadastro" : "Salvar Alterações")
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<ClienteDto>? clientes;
+    private ClienteDto clienteEditando = new();
+    private string termoBusca = string.Empty;
+    private bool exibirModal = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarClientes();
+    }
+
+    private async Task CarregarClientes()
+    {
+        clientes = await ClienteService.ObterClientesAsync(termoBusca);
+    }
+
+    private async Task FiltrarClientes()
+    {
+        await CarregarClientes();
+    }
+
+    private void AbrirModalNovo()
+    {
+        clienteEditando = new ClienteDto();
+        exibirModal = true;
+    }
+
+    private void AbrirModalEditar(ClienteDto cliente)
+    {
+        clienteEditando = new ClienteDto
+        {
+            Id = cliente.Id,
+            Nome = cliente.Nome,
+            Telefone = cliente.Telefone,
+            Email = cliente.Email,
+            Endereco = cliente.Endereco
+        };
+        exibirModal = true;
+    }
+
+    private void FecharModal()
+    {
+        exibirModal = false;
+    }
+
+    private async Task SalvarCliente()
+    {
+        if (string.IsNullOrEmpty(clienteEditando.Id))
+        {
+            await ClienteService.CriarClienteAsync(clienteEditando);
+        }
+        else
+        {
+            await ClienteService.AtualizarClienteAsync(clienteEditando.Id, clienteEditando);
+        }
+
+        exibirModal = false;
+        await CarregarClientes();
+    }
+}

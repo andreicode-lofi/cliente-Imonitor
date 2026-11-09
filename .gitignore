@@ -1,0 +1,22 @@
+## Build & Output Folders
+bin/
+obj/
+out/
+[Bb]in/
+[Oo]bj/
+
+## Visual Studio & IDE Settings
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+*.userprefs
+
+## Publish & Launch Settings
+Properties/launchSettings.json
+appsettings.Development.json
+
+## Logs & Temp files
+*.log
+*.tmp
