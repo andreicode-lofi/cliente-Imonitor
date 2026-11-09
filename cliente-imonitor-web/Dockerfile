@@ -6,7 +6,7 @@ RUN dotnet restore "cliente-imonitor-web/cliente-imonitor-web.csproj"
 
 COPY . .
 WORKDIR "/src/cliente-imonitor-web"
-RUN dotnet publish "cliente-imonitor-web.csproj" -c Release -o /app/publish
+RUN dotnet publish "cliente-imonitor-web.csproj" -c Release -o /app/publish /p:BlazorBootIntegrityCheck=false /p:BlazorEnableCompression=false
 
 FROM nginx:alpine AS final
 WORKDIR /usr/share/nginx/html
