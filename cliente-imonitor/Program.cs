@@ -20,12 +20,8 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
-
-app.UseHttpsRedirection();
+// Permite acessar a documentação OpenAPI/Swagger no Render
+app.MapOpenApi();
 
 // 3. Aplica o CORS antes dos controllers
 app.UseCors("AllowBlazor");
