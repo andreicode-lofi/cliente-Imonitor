@@ -43,4 +43,19 @@ public class ClientesController : ControllerBase
         await _clienteService.UpdateAsync(id, cliente);
         return NoContent();
     }
+
+    [HttpPost("importar")]
+    public async Task<IActionResult> ImportarCsv(IFormFile arquivo)
+    {
+        if (arquivo == null || arquivo.Length == 0)
+            return BadRequest("Nenhum arquivo enviado.");
+
+        if (!arquivo.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+            return BadRequest("O arquivo enviado deve ser do tipo .csv.");
+
+        using var stream = arquivo.OpenReadStream();
+        var resultado = await _clienteService.ImportarClientesCsvAsync(stream);
+
+        return Ok(resultado);
+    }
 }

@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>cliente-imonitor-web</title>
+    <title>i-Monitor - Gestão de Clientes</title>
     <base href="/" />
     <link rel="preload" id="webassembly" />
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
@@ -16,18 +16,17 @@
 
 <body>
     <div id="app">
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
-        <div class="loading-progress-text"></div>
+        <div class="d-flex justify-content-center align-items-center vh-100">
+            <div class="spinner-border text-primary" role="status"></div>
+        </div>
     </div>
 
     <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="." class="reload">Reload</a>
+        Ocorreu um erro não tratado na aplicação.
+        <a href="." class="reload">Recarregar</a>
         <span class="dismiss">🗙</span>
     </div>
+
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
 </body>
 

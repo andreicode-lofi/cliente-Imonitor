@@ -4,7 +4,6 @@
 @using cliente_imonitor_web.Services
 @inject ClienteService ClienteService
 
-
 <PageTitle>Gerenciamento de Clientes - i-Monitor</PageTitle>
 
 <div class="container my-4">
@@ -21,13 +20,47 @@
                 <h2 class="fw-bold text-dark mb-1">Gestão de Clientes</h2>
                 <p class="text-muted mb-0 small">Painel administrativo para controle e manutenção dos registros no sistema.</p>
             </div>
-            <div class="mt-3 mt-md-0">
+            <div class="mt-3 mt-md-0 d-flex align-items-center gap-2">
+                
+                <!-- InputFile Nativo Bootstrap -->
+                <div style="max-width: 280px;">
+                    <InputFile OnChange="UploadCsvAsync" accept=".csv" disabled="@processandoImportacao" class="form-control form-control-sm" />
+                </div>
+
                 <button class="btn btn-primary px-4 py-2 fw-semibold shadow-sm" @onclick="AbrirModalNovo">
                     + Novo Cliente
                 </button>
             </div>
         </div>
     </div>
+
+    <!-- Alerta de Resultado da Importação -->
+    @if (resultadoImportacao != null)
+    {
+        <div class="alert border-0 shadow-sm mb-4 alert-dismissible fade show @(resultadoImportacao.TotalFalhas > 0 ? "alert-warning" : "alert-success")" role="alert">
+            <div class="d-flex align-items-center mb-2">
+                <h5 class="alert-heading fw-bold mb-0">📊 Resumo da Importação de CSV</h5>
+            </div>
+            <p class="mb-1">
+                <strong>Total Processados:</strong> @resultadoImportacao.TotalProcessados |
+                <strong class="text-success">Inseridos com Sucesso:</strong> @resultadoImportacao.TotalSucesso |
+                <strong class="text-danger">Ignorados / Com Falha:</strong> @resultadoImportacao.TotalFalhas
+            </p>
+
+            @if (resultadoImportacao.Erros != null && resultadoImportacao.Erros.Any())
+            {
+                <hr class="my-2" />
+                <h6 class="fw-bold fs-7 mb-2">Detalhes das Inconsistências Identificadas:</h6>
+                <ul class="mb-0 fs-7 ps-3 text-dark">
+                    @foreach (var erro in resultadoImportacao.Erros)
+                    {
+                        <li>@erro</li>
+                    }
+                </ul>
+            }
+            <button type="button" class="btn-close" @onclick="() => resultadoImportacao = null" aria-label="Close"></button>
+        </div>
+    }
 
     <!-- Seção da Tabela e Filtros -->
     <div class="card shadow-sm border-0">
@@ -45,7 +78,7 @@
                                @bind:event="oninput"
                                @onkeyup="FiltrarClientes" />
                     </div>
-                    <div class="form-text">A busca filtras os nomes cadastrados em tempo real.</div>
+                    <div class="form-text">A busca filtra os nomes cadastrados em tempo real.</div>
                 </div>
             </div>
 
@@ -170,6 +203,10 @@
     private string termoBusca = string.Empty;
     private bool exibirModal = false;
 
+    // Estado da Importação do CSV
+    private ImportacaoResultadoDto? resultadoImportacao;
+    private bool processandoImportacao = false;
+
     protected override async Task OnInitializedAsync()
     {
         await CarregarClientes();
@@ -183,6 +220,36 @@
     private async Task FiltrarClientes()
     {
         await CarregarClientes();
+    }
+
+    private async Task UploadCsvAsync(InputFileChangeEventArgs e)
+    {
+        var arquivo = e.File;
+        if (arquivo == null) return;
+
+        try
+        {
+            processandoImportacao = true;
+            resultadoImportacao = null;
+
+            resultadoImportacao = await ClienteService.ImportarCsvAsync(arquivo);
+
+            await CarregarClientes();
+        }
+        catch (Exception ex)
+        {
+            resultadoImportacao = new ImportacaoResultadoDto
+            {
+                TotalProcessados = 0,
+                TotalSucesso = 0,
+                TotalFalhas = 1,
+                Erros = new List<string> { $"Falha no processamento: {ex.Message}" }
+            };
+        }
+        finally
+        {
+            processandoImportacao = false;
+        }
     }
 
     private void AbrirModalNovo()
